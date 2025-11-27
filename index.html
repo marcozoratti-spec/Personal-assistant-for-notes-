@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Study Reminder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Classic + modern look -->
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-card: #111827;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --danger: #f97373;
+      --success: #4ade80;
+      --border: #1f2937;
+      --radius: 14px;
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.45);
+      --transition: 200ms ease-out;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top, #1f2937 0, #020617 50%, #020617 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 16px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1100px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+      border-radius: 24px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(18px);
+    }
+
+    header {
+      padding: 16px 22px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      justify-content: space-between;
+    }
+
+    .logo-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.2), transparent);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.7);
+    }
+
+    .logo-circle span {
+      font-size: 18px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .title-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title-text h1 {
+      font-size: 18px;
+      letter-spacing: 0.04em;
+    }
+
+    .title-text p {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .clock-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      font-size: 13px;
+    }
+
+    .clock-time {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .clock-date {
+      color: var(--text-soft);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 2fr);
+      gap: 16px;
+      padding: 16px;
+    }
+
+    @media (max-width: 800px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        align-items: flex-start;
+      }
+
+      .clock-container {
+        align-items: flex-start;
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.22), transparent 55%),
+                  linear-gradient(to bottom right, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 55%);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .field label {
+      color: var(--text-soft);
+    }
+
+    .input,
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background-color: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border var(--transition), box-shadow var(--transition), background var(--transition),
+        transform 160ms ease-out;
+    }
+
+    .input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5);
+      background-color: rgba(15, 23, 42, 1);
+      transform: translateY(-1px);
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .textarea-wrapper {
+      margin-top: 4px;
+      z-index: 1;
+    }
+
+    .helper {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      z-index: 1;
+    }
+
+    button {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 12px;
+      padding: 8px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background var(--transition), transform 160ms ease-out, box-shadow var(--transition),
+        border var(--transition);
+    }
+
+    button span.icon {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      border-color: rgba(56, 189, 248, 0.6);
+      color: #0b1120;
+      font-weight: 600;
+      box-shadow: 0 12px 22px rgba(56, 189, 248, 0.4);
+    }
+
+    button.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 32px rgba(56, 189, 248, 0.55);
+    }
+
+    button.secondary {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    button.secondary:hover {
+      background: rgba(15, 23, 42, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.7);
+    }
+
+    button.danger {
+      border-color: rgba(248, 113, 113, 0.6);
+      color: var(--danger);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .status-bar {
+      font-size: 11px;
+      color: var(--text-soft);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      z-index: 1;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--danger);
+      box-shadow: 0 0 8px rgba(248, 113, 113, 0.7);
+    }
+
+    .dot.ok {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.7);
+    }
+
+    .status-pill {
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+      z-index: 1;
+    }
+
+    .note-item {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px;
+      background: rgba(15, 23, 42, 0.95);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      position: relative;
+      overflow: hidden;
+      animation: slideIn 220ms ease-out;
+    }
+
+    .note-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), transparent 60%);
+      opacity: 0;
+      transition: opacity 200ms ease-out;
+      pointer-events: none;
+    }
+
+    .note-item:hover::before {
+      opacity: 1;
+    }
+
+    .note-main {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .note-text {
+      font-size: 13px;
+    }
+
+    .note-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 6px;
+      color: var(--text-soft);
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 11px;
+    }
+
+    .badge.subject {
+      border-color: rgba(56, 189, 248, 0.7);
+      color: var(--accent);
+      background: rgba(8, 47, 73, 0.6);
+    }
+
+    .badge.date {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .note-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .tiny-btn {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      cursor: pointer;
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tiny-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    footer {
+      padding: 8px 16px 12px;
+      font-size: 11px;
+      color: var(--text-soft);
+      border-top: 1px solid rgba(148, 163, 184, 0.15);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <div class="logo-title">
+        <div class="logo-circle">
+          <span>SR</span>
+        </div>
+        <div class="title-text">
+          <h1>Smart Study Reminder</h1>
+          <p>Notes in class, reminders at home</p>
+        </div>
+      </div>
+      <div class="clock-container">
+        <div class="clock-time" id="clock-time">--:--</div>
+        <div class="clock-date" id="clock-date">----</div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Left card: input form -->
+      <section class="card" aria-label="Create new note">
+        <div class="card-header">
+          <div>
+            <div class="card-title">New note</div>
+            <div class="card-subtitle">Write what the teacher says before you forget</div>
+          </div>
+          <div class="pill">classroom mode</div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="subject-select">Subject</label>
+            <select id="subject-select">
+              <option value="General">General</option>
+              <option value="Math">Math</option>
+              <option value="English">English</option>
+              <option value="Business">Business</option>
+              <option value="Spanish">Spanish</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="History">History</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="priority-select">Priority</label>
+            <select id="priority-select">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="due-date">Due date</label>
+            <input class="input" type="date" id="due-date" />
+          </div>
+
+          <div class="field">
+            <label for="due-time">Due time</label>
+            <input class="input" type="time" id="due-time" />
+          </div>
+        </div>
+
+        <div class="textarea-wrapper">
+          <div class="field">
+            <label for="note-text">Note</label>
+            <textarea class="input" id="note-text" placeholder="Example: Math test on Friday, bring calculator"></textarea>
+            <div class="helper">Tip: keep notes short and clear for the LCD at home.</div>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button class="primary" id="btn-save-note">
+            <span class="icon">✎</span>
+            Save note
+          </button>
+          <button class="secondary" id="btn-export-json">
+            <span class="icon">⭳</span>
+            Export notes JSON
+          </button>
+          <button class="secondary" id="btn-clear-form">
+            <span class="icon">✕</span>
+            Clear form
+          </button>
+        </div>
+
+        <div class="status-bar">
+          <div class="status-pill">
+            <span class="dot ok" id="local-storage-dot"></span>
+            <span id="local-storage-status">Local storage ready</span>
+          </div>
+          <div class="status-pill">
+            <span class="dot" id="sync-status-dot"></span>
+            <span id="sync-status-label">Not synced with ESP32</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right card: notes + hardware connections -->
+      <section class="card" aria-label="Notes and device sync">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Notes & device</div>
+            <div class="card-subtitle">Manage your notes and sync with ESP32 / ESP32-C6</div>
+          </div>
+          <div class="pill">home desk mode</div>
+        </div>
+
+        <div class="actions-row">
+          <button class="secondary" id="btn-sync-wifi">
+            <span class="icon">📡</span>
+            Sync via Wi-Fi
+          </button>
+          <button class="secondary" id="btn-connect-bt">
+            <span class="icon">🌀</span>
+            Connect Bluetooth
+          </button>
+          <button class="secondary" id="btn-clear-notes">
+            <span class="icon">🗑</span>
+            Clear all notes
+          </button>
+        </div>
+
+        <div class="status-bar">
+          <div class="status-pill">
+            <span class="dot" id="wifi-dot"></span>
+            <span id="wifi-status-label">Wi-Fi: not connected</span>
+          </div>
+          <div class="status-pill">
+            <span class="dot" id="bt-dot"></span>
+            <span id="bt-status-label">Bluetooth: not connected</span>
+          </div>
+        </div>
+
+        <div class="notes-list" id="notes-list" aria-label="Saved notes">
+          <!-- notes will be rendered here -->
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Data is stored locally in your browser and can be exported as JSON for the ESP32.</span>
+      <span>Wi-Fi requests go to your ESP32 HTTP server. Bluetooth uses Web Bluetooth (user-triggered).</span>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
