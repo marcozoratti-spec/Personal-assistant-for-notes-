@@ -1,0 +1,22 @@
+{
+  "deviceName": "StudyReminder-Desk01",
+  "wifi": {
+    "ssid": "YOUR_WIFI_SSID",
+    "password": "YOUR_WIFI_PASSWORD"
+  },
+  "http": {
+    "listenPort": 80,
+    "notesEndpoint": "/api/notes"
+  },
+  "bluetooth": {
+    "enabled": true,
+    "name": "StudyReminder",
+    "serviceUuid": "0000ffe0-0000-1000-8000-00805f9b34fb",
+    "characteristicUuid": "0000ffe1-0000-1000-8000-00805f9b34fb"
+  },
+  "lcd": {
+    "columns": 16,
+    "rows": 2,
+    "i2cAddress": "0x27"
+  }
+}
